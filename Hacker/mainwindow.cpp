@@ -36,7 +36,8 @@ MainWindow::MainWindow(QWidget *parent) :
     //Bind the clicked function with ListView and Button
     connect(ui->onlineIPsList, SIGNAL(clicked(QModelIndex)), this, SLOT(itemClicked(QModelIndex)));
     connect(ui->getOnlineIPButton, SIGNAL(clicked()), this, SLOT(getOnlineIPs()));
-    connect(ui->queryArpButton, SIGNAL(clicked()), this, SLOT(queryARP()));
+    connect(ui->queryArpButton, SIGNAL(clicked()), this, SLOT(queryMacAddress()));
+    connect(ui->sendFakedARPButton, SIGNAL(clicked()), this, SLOT(makeHostRedirectToMeARP()));
 }
 
 MainWindow::~MainWindow()
@@ -112,7 +113,33 @@ void MainWindow::updateProgress(int value)
     ui->progressBar->setValue(value);
 }
 
-void MainWindow::queryARP()
+//Based on input ip, query its corresponding mac address
+void MainWindow::queryMacAddress()
 {
-    hacker->queryARP();
+    QString dest_ip = ui->ipEdit->displayText();
+    hacker->queryMacAddress(dest_ip);
+}
+
+//Update result shower
+void MainWindow::showMacAddress(const QString& mac_addr)
+{
+    ui->resultShower->setText(mac_addr);
+}
+
+void MainWindow::makeHostRedirectToMeARP()
+{
+    static bool hacking = false;
+    if(hacking){
+        hacking = false;
+        ui->ipEdit->setEnabled(true);
+        ui->sendFakedARPButton->setText("Do hacker");
+        emit stopHacking();
+    }else{
+        hacking = true;
+        ui->ipEdit->setEnabled(false);
+        ui->sendFakedARPButton->setText("Stop hacker");
+        QString input_ip = ui->ipEdit->displayText();
+        hacker->makeHostRedirectToMe(input_ip);
+
+    }
 }

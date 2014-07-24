@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>673</width>
+    <width>705</width>
     <height>490</height>
    </rect>
   </property>
@@ -14,20 +14,7 @@
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralWidget">
-   <widget class="QPushButton" name="queryArpButton">
-    <property name="geometry">
-     <rect>
-      <x>510</x>
-      <y>10</y>
-      <width>97</width>
-      <height>27</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Query ARP</string>
-    </property>
-   </widget>
-   <widget class="QWidget" name="">
+   <widget class="QWidget" name="layoutWidget">
     <property name="geometry">
      <rect>
       <x>30</x>
@@ -165,7 +152,7 @@
          </layout>
         </widget>
        </widget>
-       <widget class="QWidget" name="">
+       <widget class="QWidget" name="layoutWidget">
         <property name="geometry">
          <rect>
           <x>0</x>
@@ -235,16 +222,68 @@
          </item>
         </layout>
        </widget>
-       <zorder>getOnlineIPButton</zorder>
-       <zorder>label</zorder>
-       <zorder>startIPEdit</zorder>
-       <zorder>label_2</zorder>
-       <zorder>endIPEdit</zorder>
-       <zorder>groupBox_2</zorder>
-       <zorder>groupBox_2</zorder>
+       <zorder>layoutWidget</zorder>
        <zorder>line</zorder>
        <zorder>groupBox_2</zorder>
       </widget>
+     </item>
+    </layout>
+   </widget>
+   <widget class="QWidget" name="">
+    <property name="geometry">
+     <rect>
+      <x>430</x>
+      <y>2</y>
+      <width>258</width>
+      <height>421</height>
+     </rect>
+    </property>
+    <layout class="QVBoxLayout" name="verticalLayout_3">
+     <item>
+      <layout class="QHBoxLayout" name="horizontalLayout_3">
+       <item>
+        <widget class="QLabel" name="label_3">
+         <property name="text">
+          <string>IP:</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLineEdit" name="ipEdit">
+         <property name="text">
+          <string>192.168.1.103</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <layout class="QHBoxLayout" name="horizontalLayout_4">
+       <item>
+        <widget class="QPushButton" name="queryArpButton">
+         <property name="text">
+          <string>Query MAC</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="sendFakedARPButton">
+         <property name="text">
+          <string>Send Hacker</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <widget class="QLabel" name="tipLabel">
+       <property name="text">
+        <string>Result:</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QTextBrowser" name="resultShower"/>
      </item>
     </layout>
    </widget>
@@ -263,7 +302,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>673</width>
+     <width>705</width>
      <height>23</height>
     </rect>
    </property>

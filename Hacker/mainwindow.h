@@ -29,14 +29,20 @@ private:
     QStandardItemModel *standardItemModel;
 
     void updateOnlineIPsList(QString& ip);
+
+signals:
+    void stopHacking();
+
 private slots:
     void itemClicked(QModelIndex index);
+    void queryMacAddress();
+
     void getOnlineIPs();
     void oneOnlineIPFound(QString ip);
     void scanDone();
     void updateProgress(int value);
-    void queryARP();
-
+    void showMacAddress(const QString &mac_addr);
+    void makeHostRedirectToMeARP();
 };
 
 

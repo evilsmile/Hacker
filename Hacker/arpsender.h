@@ -2,6 +2,7 @@
 #define ARPSENDER_H
 
 #include <QString>
+#include <QObject>
 #include <sys/socket.h>
 #include <sys/types.h>
 
@@ -45,28 +46,38 @@ struct ARPPacket{
     struct Arp arp;
 };
 
-class ARPSender
+class ARPSender : public QObject
 {
+    Q_OBJECT
 public:
     ARPSender();
     ~ARPSender();
 
-    void queryARP();
-    void sendARP(const QString& ip);
+    void queryMacAddress(const QString &dest_ip);
+    void sendARP(const QString& dest_ip, quint16 arp_type);
     void receiveARP();
+    void sendFakedARP(const QString& dest_ip, const QString& faked_ip);
+    void stopSendFakedARP();
+
+signals:
+    void macAddressReturned(const QString& mac_addr);
 
 private:
     int sockfd;
     ARPPacket packet;
 
-    static quint8 self_mac[MAC_ADDR_LEN];
-    static quint8 self_ip[IP_ADDR_LEN];
+    bool hacking;
 
-    static void getSelfMAC();
-    static void getSelfIP();
+    quint8 self_mac[MAC_ADDR_LEN];
+    quint8 self_ip[IP_ADDR_LEN];
 
-    void pack(const QString& ip);
-    void unpack();
+    void getSelfMAC();
+    void getSelfIP();
+
+    void fakeIP(const QString& faked_ip);
+
+    void pack(const QString& ip, quint16 arp_type);
+    void getDestMacAddr();
 };
 
 
