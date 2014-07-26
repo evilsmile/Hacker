@@ -65,14 +65,13 @@ signals:
 private:
     int sockfd;
     ARPPacket packet;
-
     bool hacking;
 
-    quint8 self_mac[MAC_ADDR_LEN];
-    quint8 self_ip[IP_ADDR_LEN];
+    quint8 own_ip[IP_ADDR_LEN];
+    quint8 own_mac[MAC_ADDR_LEN];
 
-    void getSelfMAC();
-    void getSelfIP();
+    void resetSelfIP();
+    void resetSelfMAC();
 
     void fakeIP(const QString& faked_ip);
 

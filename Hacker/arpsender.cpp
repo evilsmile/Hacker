@@ -1,4 +1,3 @@
-#include "arpsender.h"
 #include <QDebug>
 
 #include <cstdlib>
@@ -11,14 +10,16 @@
 #include <net/if.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
-#include <ifaddrs.h>
 #include <linux/if_packet.h>
 #include <linux/if_ether.h>
 
+#include "arpsender.h"
+#include "hostinfo.h"
+
 ARPSender::ARPSender() : hacking(false)
 {
-    getSelfIP();
-    getSelfMAC();
+    resetSelfIP();
+    resetSelfMAC();
 }
 
 ARPSender::~ARPSender()
@@ -26,11 +27,31 @@ ARPSender::~ARPSender()
 
 }
 
+void ARPSender::resetSelfIP()
+{
+    for(int i = 0; i < IP_ADDR_LEN; i++){
+        own_ip[i] = HostInfo::self_ip[i];
+    }
+}
+
+void ARPSender::resetSelfMAC()
+{
+    for(int i = 0; i < MAC_ADDR_LEN; i++){
+        own_mac[i] = HostInfo::self_mac[i];
+    }
+}
+
 void ARPSender::queryMacAddress(const QString& dest_ip)
 {
-   sendARP(dest_ip, ARP_REQUEST);
-   receiveARP();
-   getDestMacAddr();
+    struct in_addr dest_addr;
+    inet_aton(dest_ip.toLatin1().data(), &dest_addr);
+    void *reply_sender_addr = &(packet.arp.send_ip_addr);
+    void *request_dest_addr = &dest_addr;
+    while(memcmp(reply_sender_addr, request_dest_addr, sizeof(dest_addr)) != 0){
+        sendARP(dest_ip, ARP_REQUEST);
+        receiveARP();
+    }
+    getDestMacAddr();
 }
 
 void ARPSender::sendARP(const QString &dest_ip, quint16 arp_type)
@@ -45,7 +66,7 @@ void ARPSender::sendARP(const QString &dest_ip, quint16 arp_type)
     eth_info.sll_halen = ETH_ALEN;
     eth_info.sll_protocol = htons(ETH_P_ARP);
     for(int i = 0; i < ETH_ALEN; i++){
-        eth_info.sll_addr[i] = self_mac[i];
+        eth_info.sll_addr[i] = own_mac[i];
     }
  //   eth_info.sll_hatype = ARPHRD_ETHER;
 
@@ -76,14 +97,14 @@ void ARPSender::sendARP(const QString &dest_ip, quint16 arp_type)
 void ARPSender::pack(const QString &ip, quint16 arp_type)
 {
     //-----Fill ethernet header
-
+//    char lan_mac[] = {0xDC, 0x85, 0xDE, 0x60, 0x65, 0xE8};
     //Target MAC address
     for(int i = 0; i < MAC_ADDR_LEN; i++){
         packet.ethHeader.target_hw_addr[i] = 0xFF;
     }
     //Source MAC address
     for(int i = 0; i < MAC_ADDR_LEN; i++){
-        packet.ethHeader.src_hw_addr[i] = self_mac[i];
+        packet.ethHeader.src_hw_addr[i] = own_mac[i];
     }
     //Frame type
     packet.ethHeader.frametype = htons(ETH_FRAME_TYPE_ARP);
@@ -105,7 +126,7 @@ void ARPSender::pack(const QString &ip, quint16 arp_type)
     packet.arp.op = htons(arp_type);
 
     for(int i = 0; i < MAC_ADDR_LEN; i++){
-        packet.arp.send_hw_addr[i] = self_mac[i];
+        packet.arp.send_hw_addr[i] = own_mac[i];
         packet.arp.recv_hw_addr[i] = 0x00;
     }
 
@@ -120,7 +141,7 @@ void ARPSender::pack(const QString &ip, quint16 arp_type)
 
 
     for(int i = 0 ;i < IP_ADDR_LEN; i++){
-        packet.arp.send_ip_addr[i] = self_ip[i];
+        packet.arp.send_ip_addr[i] = own_ip[i];
         packet.arp.recv_ip_addr[i] = dest_ip_array[i];
     }
 
@@ -136,7 +157,7 @@ void ARPSender::receiveARP()
         qDebug() << "recvfrom error";
         return;
     }else{
-        qDebug()  << "received " << num << " bytes. mac address: ";
+        qDebug()  << "received " << num << " bytes.";
     }
     close(sockfd);
 }
@@ -165,7 +186,7 @@ void ARPSender::sendFakedARP(const QString &dest_ip, const QString &faked_ip)
         qDebug() << "Send one arp";
     }
 
-    getSelfIP();
+    resetSelfIP();
 }
 
 //Called by SendARPSnoofingThread, to stop this ARP hacking
@@ -179,82 +200,8 @@ void ARPSender::fakeIP(const QString &faked_ip)
 {
     quint32 sock_addr = 0;
     inet_aton(faked_ip.toLatin1().data(), (struct in_addr*)&sock_addr);
-    self_ip[0] = sock_addr & 0xff;
-    self_ip[1] = (sock_addr >> 8) & 0xff;
-    self_ip[2] = (sock_addr >> 16) & 0xff;
-    self_ip[3] = (sock_addr >> 24) & 0xff;
-}
-
-//quint8 ARPSender::self_ip[] = {0};
-
-void ARPSender::getSelfIP()
-{
-/* //Solution1: by getifaddr()
-    struct ifaddrs *if_addresses = NULL;
-
-    getifaddrs(&if_addresses);
-
-    while(if_addresses != NULL){
-           //If it's wlan0
-           if((if_addresses->ifa_addr->sa_family == AF_INET)
-                   && (strncmp(NIC_NAME, if_addresses->ifa_name, strlen(NIC_NAME)) == 0)){
-               quint32 sock_addr = 0;
-
-               sock_addr = (((struct sockaddr_in*)if_addresses->ifa_addr)->sin_addr.s_addr);
-               self_ip[0] = sock_addr & 0xff;
-               self_ip[1] = (sock_addr >> 8) & 0xff;
-               self_ip[2] = (sock_addr >> 16) & 0xff;
-               self_ip[3] = (sock_addr >> 24) & 0xff;
-
-               //Debug info
-               char buf[100];
-               inet_ntop(AF_INET, &sock_addr, buf, sizeof(buf));
-               qDebug() << "get ip: " << buf << if_addresses->ifa_name;
-           }
-           if_addresses = if_addresses->ifa_next;
-    }
-    freeifaddrs(if_addresses);
-    */
-
-    //Solution2: by ioctl()
-    int sock_tmp = -1;
-    struct ifreq req;
-
-    sock_tmp = socket(AF_INET, SOCK_DGRAM, 0);
-
-    strncpy(req.ifr_name, NIC_NAME, strlen(NIC_NAME) + 1);
-
-    int err;
-    err = ioctl(sock_tmp, SIOCGIFADDR, &req);
-
-    close(sock_tmp);
-
-    if(err != -1){
-        memcpy(self_ip, &(req.ifr_addr.sa_data[2]),IP_ADDR_LEN);
-//        qDebug() << hex << self_ip[0] << "." << self_ip[1] << "." << self_ip[2] << "." << self_ip[3];
-    }else{
-        qDebug() << "Get IP error";
-    }
-}
-
-//quint8 ARPSender::self_mac[] = {0};
-void ARPSender::getSelfMAC()
-{
-    int sock_tmp = -1;
-    struct ifreq req;
-
-    sock_tmp = socket(AF_INET, SOCK_DGRAM, 0);
-
-    strncpy(req.ifr_name, NIC_NAME, strlen(NIC_NAME) + 1);
-
-    int err;
-    err = ioctl(sock_tmp, SIOCGIFHWADDR, &req);
-
-    close(sock_tmp);
-
-    if(err != -1){
-        memcpy(self_mac, &req.ifr_hwaddr.sa_data, MAC_ADDR_LEN);
-    }else{
-        qDebug() << "Get MAC error";
-    }
+    own_ip[0] = sock_addr & 0xff;
+    own_ip[1] = (sock_addr >> 8) & 0xff;
+    own_ip[2] = (sock_addr >> 16) & 0xff;
+    own_ip[3] = (sock_addr >> 24) & 0xff;
 }

@@ -7,11 +7,11 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-IPResolver::IPResolver()
+IPTools::IPTools()
 {
 }
 
-QString IPResolver::getHostname(const QString &ip)
+QString IPTools::getHostname(const QString &ip)
 {
     char hbuf[NI_MAXHOST], sbuf[NI_MAXSERV];
     struct addrinfo hints;
@@ -40,4 +40,22 @@ QString IPResolver::getHostname(const QString &ip)
             return QString("Unknown");
         }
     }
+}
+
+quint16 IPTools::ipChecksum(quint16 *buffer, int size)
+{
+    unsigned long cksum = 0;
+    while(size>1)
+    {
+        cksum += *buffer++;
+        size -= 2;
+    }
+    if(size)
+    {
+        cksum += *(quint8*)buffer;
+    }
+    cksum = (cksum>>16) + (cksum&0xffff);   // 将高 16bit 与低 16bit 相加
+    cksum += (cksum>>16);              // 将进位到高位的 16bit 与低 16bit 再相加
+
+    return (quint16)(~cksum);
 }

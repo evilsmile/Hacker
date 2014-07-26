@@ -18,12 +18,21 @@ SOURCES += main.cpp\
     icmpsocket.cpp \
     ipresolver.cpp \
     arpsender.cpp \
-    hacker.cpp
+    hacker.cpp \
+    getonlineipsthread.cpp \
+    sendnoofingthread.cpp \
+    getpacketsthread.cpp \
+    hostinfo.cpp
 
 HEADERS  += mainwindow.h \
     icmpsocket.h \
     ipresolver.h \
     arpsender.h \
-    hacker.h
+    hacker.h \
+    hostinfo.h \
+    getonlineipsthread.h \
+    sendnoofingthread.h \
+    getpacketsthread.h \
+    global_define.h
 
 FORMS    += mainwindow.ui
