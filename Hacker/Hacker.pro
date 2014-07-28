@@ -22,7 +22,9 @@ SOURCES += main.cpp\
     getonlineipsthread.cpp \
     sendnoofingthread.cpp \
     getpacketsthread.cpp \
-    hostinfo.cpp
+    hostinfo.cpp \
+    querymacthread.cpp \
+    gethostnamethread.cpp
 
 HEADERS  += mainwindow.h \
     icmpsocket.h \
@@ -33,6 +35,8 @@ HEADERS  += mainwindow.h \
     getonlineipsthread.h \
     sendnoofingthread.h \
     getpacketsthread.h \
-    global_define.h
+    global_define.h \
+    querymacthread.h \
+    gethostnamethread.h
 
 FORMS    += mainwindow.ui

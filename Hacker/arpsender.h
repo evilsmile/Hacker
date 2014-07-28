@@ -10,8 +10,6 @@
 #define IP_ADDR_LEN 4
 #define MAC_ADDR_LEN 6
 
-#define NIC_NAME "wlan0"
-
 #define ETH_PROTO_IP 0x0800
 
 #define ETH_FRAME_TYPE_ARP 0x0806
@@ -56,8 +54,8 @@ public:
     void queryMacAddress(const QString &dest_ip);
     void sendARP(const QString& dest_ip, quint16 arp_type);
     void receiveARP();
-    void sendFakedARP(const QString& dest_ip, const QString& faked_ip);
-    void stopSendFakedARP();
+    void startSnoofingAsMonitor(const QString& dest_ip, const QString& faked_ip);
+    void stopSnoofing();
 
 signals:
     void macAddressReturned(const QString& mac_addr);
@@ -69,16 +67,17 @@ private:
 
     quint8 own_ip[IP_ADDR_LEN];
     quint8 own_mac[MAC_ADDR_LEN];
+    quint8 dest_mac[MAC_ADDR_LEN];
 
     void resetSelfIP();
     void resetSelfMAC();
-
     void fakeIP(const QString& faked_ip);
+    void sendFakedARP(const QString &victim_ip, const QString &faked_ip);
+    void setDestMacGateway();
+    void setDestMacVictim();
 
     void pack(const QString& ip, quint16 arp_type);
     void getDestMacAddr();
 };
-
-
 
 #endif // ARPSENDER_H

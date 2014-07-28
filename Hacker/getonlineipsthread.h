@@ -8,8 +8,9 @@ class GetOnlineIPsThread : public QThread{
     Q_OBJECT
 
 public:
-    explicit GetOnlineIPsThread(QObject *parent, int startIP, int endIP);
+    explicit GetOnlineIPsThread(QObject *parent);
     ~GetOnlineIPsThread();
+    void setIpRange(int startIP, int endIP);
 
 signals:
     void foundOneOnlineIP(QString ip);

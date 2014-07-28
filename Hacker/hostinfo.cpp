@@ -16,10 +16,11 @@ quint8 HostInfo::self_mac[] = {0};
 quint8 HostInfo::self_ip[] = {0};
 
 quint8 HostInfo::gateway_mac[MAC_ADDR_LEN] = {0xBC, 0xD1, 0x77, 0x56, 0x73, 0xDC};
+quint8 HostInfo::victim_mac[MAC_ADDR_LEN] = {0};
 
 HostInfo::HostInfo()
 {
-
+    hostInfoInit();
 }
 
 void HostInfo::hostInfoInit()

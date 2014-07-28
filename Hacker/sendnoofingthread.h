@@ -9,8 +9,8 @@
 class SendArpSnoofingThread : public QThread{
     Q_OBJECT
 public:
-    explicit SendArpSnoofingThread(ARPSender *arpSender, const QString& dest_ip);
-
+    explicit SendArpSnoofingThread(ARPSender *arpSender);
+    void setDestIP(const QString& dest_ip);
 private slots:
     void stopSendFakedARP();
 

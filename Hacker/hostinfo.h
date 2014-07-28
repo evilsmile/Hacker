@@ -10,6 +10,8 @@ public:
     static quint8 self_ip[IP_ADDR_LEN];
     static quint8 gateway_mac[MAC_ADDR_LEN];
 
+    static quint8 victim_mac[MAC_ADDR_LEN];
+
     HostInfo();
     void hostInfoInit();
 

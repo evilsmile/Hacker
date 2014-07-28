@@ -36,9 +36,11 @@ signals:
 private slots:
     void itemClicked(QModelIndex index);
     void queryMacAddress();
+    void stopHostSurfing();
 
     void getOnlineIPs();
     void oneOnlineIPFound(QString ip);
+    void updateOneIPInfo(QString ip);
     void scanDone();
     void updateProgress(int value);
     void showMacAddress(const QString &mac_addr);

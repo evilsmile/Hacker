@@ -30,7 +30,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
     ui->progressBar->setVisible(false);
     ui->onlineIPsList->setModel(standardItemModel);
-    ui->onlineIPsList->setStyleSheet("background:transparent");
+//    ui->onlineIPsList->setStyleSheet("background:transparent");
     ui->getOnlineIPButton->setStyleSheet("color:blue;");
 
     //Bind the clicked function with ListView and Button
@@ -38,6 +38,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->getOnlineIPButton, SIGNAL(clicked()), this, SLOT(getOnlineIPs()));
     connect(ui->queryArpButton, SIGNAL(clicked()), this, SLOT(queryMacAddress()));
     connect(ui->sendFakedARPButton, SIGNAL(clicked()), this, SLOT(makeHostRedirectToMeARP()));
+    connect(ui->blockButton, SIGNAL(clicked()), this, SLOT(stopHostSurfing()));
 }
 
 MainWindow::~MainWindow()
@@ -48,7 +49,7 @@ MainWindow::~MainWindow()
 
 void MainWindow::itemClicked(QModelIndex index)
 {
-    qDebug() << index.data().toString();
+    ui->ipEdit->setText(index.data().toString().split(":")[0]);
 }
 
 //Update label and ask hacker to do it
@@ -72,9 +73,11 @@ void MainWindow::getOnlineIPs()
 
 void MainWindow::oneOnlineIPFound(QString ip)
 {
-    updateOnlineIPsList(ip);
-
-    qDebug() << hacker->getHostname(ip);
+    hacker->getHostname(ip);
+}
+void MainWindow::updateOneIPInfo(QString ip_info)
+{
+    updateOnlineIPsList(ip_info);
 }
 
 //When a new ip online is found, updateOnlineIPsList() will be called.
@@ -93,7 +96,7 @@ void MainWindow::updateOnlineIPsList(QString& ip)
     }
     standardItemModel->appendRow(item);
 
-    ui->onlineIPsList->setGridSize(QSize(100, 25));
+    ui->onlineIPsList->setGridSize(QSize(100, 20));
     ui->statusTip->setText(QString("Has found ").append(QString::number(onlineIPsNum)).append(" IPs.."));
 }
 
@@ -126,20 +129,45 @@ void MainWindow::showMacAddress(const QString& mac_addr)
     ui->resultShower->setText(mac_addr);
 }
 
-void MainWindow::makeHostRedirectToMeARP()
+static bool hacking = false;
+
+void MainWindow::stopHostSurfing()
 {
-    static bool hacking = false;
     if(hacking){
         hacking = false;
         ui->ipEdit->setEnabled(true);
-        ui->sendFakedARPButton->setText("Do hacker");
+        ui->queryArpButton->setEnabled(true);
+        ui->sendFakedARPButton->setEnabled(true);
+        ui->blockButton->setText("Block");
         emit stopHacking();
     }else{
         hacking = true;
         ui->ipEdit->setEnabled(false);
-        ui->sendFakedARPButton->setText("Stop hacker");
+        ui->queryArpButton->setEnabled(false);
+        ui->sendFakedARPButton->setEnabled(false);
+        ui->blockButton->setText("Stop");
         QString input_ip = ui->ipEdit->displayText();
-        hacker->makeHostRedirectToMe(input_ip);
+        hacker->makeHostRedirectToMe(input_ip, true);
+    }
+}
+
+void MainWindow::makeHostRedirectToMeARP()
+{
+    if(hacking){
+        hacking = false;
+        ui->ipEdit->setEnabled(true);
+        ui->queryArpButton->setEnabled(true);
+        ui->sendFakedARPButton->setText("Do hacker");
+        ui->blockButton->setEnabled(true);
+        emit stopHacking();
+    }else{
+        hacking = true;
+        ui->ipEdit->setEnabled(false);
+        ui->queryArpButton->setEnabled(false);
+        ui->sendFakedARPButton->setText("Stop hacker");
+        ui->blockButton->setEnabled(false);
+        QString input_ip = ui->ipEdit->displayText();
+        hacker->makeHostRedirectToMe(input_ip, false);
 
     }
 }
